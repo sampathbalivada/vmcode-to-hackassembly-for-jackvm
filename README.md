@@ -19,3 +19,10 @@ VMTranslator (Codebase)
     |___ Code Generator (class)
     |___ Driver (main)
 ```
+
+### C++ Concepts Covered
+
+- STL Vector (`vector`)
+- File Handling (`fstream`)
+- String Tokenization using String Streams (`sstring`)
+- C++ Enums

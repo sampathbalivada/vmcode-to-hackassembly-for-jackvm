@@ -26,3 +26,11 @@ VMTranslator (Codebase)
 - File Handling (`fstream`)
 - String Tokenization using String Streams (`sstring`)
 - C++ Enums
+
+### Assumptions and Limitations
+
+#### Parser:
+
+- Not checking for special characters or other types of characters in the tokens.
+- Ignores all the token after the third token in a line.
+- Assuming that the input file only contains lowercase characters. (Input Sanitization)

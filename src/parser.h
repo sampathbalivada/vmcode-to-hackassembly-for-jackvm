@@ -3,7 +3,7 @@
 #include <vector>
 #include <sstream>
 
-enum commandType
+enum COMMAND_TYPE
 {
     C_ARITHMETIC,
     C_PUSH,
@@ -21,36 +21,44 @@ class Parser
 public:
     // Constructor:
     // Open the input file and get it ready for parsing
-    Parser(std::string file_location);
+    Parser(std::string);
 
-    // Methods
-    // has_more_commands
-    bool has_more_commands();
-    // advance
+    // Methods:
+    // determines if there the more lines to parse
+    bool hasMoreCommands();
+    // moves the parser to next line if there are more lines
     void advance();
-    // command_type
-    commandType command_type();
-    // arg1
+    // returns the type of command for the current line
+    COMMAND_TYPE commandType();
+    // returns the command
+    std::string currentCommand();
+    // returns the first argument in the command
     std::string arg1();
-    // arg2
+    // returns the second argument in the command
     std::string arg2();
 
 private:
+    // Variables
     // store the file location
     std::string _file_location;
     // store the file reader
     std::ifstream _file_reader = std::ifstream();
-    // current line
-    int current_line;
-    // store the command type
-    commandType _command_type;
-    // value of the first argument in the command
+    // current line number in vm_code being parsed
+    // cannot use size_t as it is an unsigned type
+    int current_line = -1;
+    // stores the type of command for the current line
+    COMMAND_TYPE _command_type;
+    // stores the current command
+    std::string _command; 
+    // stores the first argument for the command
     std::string _arg1;
-    // value of the second argument in the command
+    // stores the second argument for the command
     std::string _arg2;
     // store the entire file as array of strings
     std::vector<std::string> vm_code;
 
+    // Methods:
+    // Removed whitespaces and speacial characters from the start and end of the string
     std::string trimfnc(std::string);
 };
 
@@ -73,17 +81,23 @@ Parser::Parser(std::string file_location)
     this->_file_reader.close();
 }
 
-bool Parser::has_more_commands()
+bool Parser::hasMoreCommands()
 {
-    return current_line < vm_code.size() - 1;
+    /* 
+    *  cannot comapre size_t and int as size_t is unsigned and int is signed.
+    *  typecasted size_t to int
+    */
+    return this->current_line < (int)vm_code.size() - 1;
 }
 
 void Parser::advance()
-{
-    // check if the parser has more commands to parse
-    // and move to the next line of command
-
-    if (has_more_commands())
+{      
+    /*
+    *  check if the parser has more commands to parse
+    *  and move to the next line of command
+    */
+    
+    if (hasMoreCommands())
     {
         do
         {
@@ -107,33 +121,23 @@ void Parser::advance()
         // create a string stream to tokenize
         std::istringstream line_of_code(this->vm_code[this->current_line]);
 
-        std::string command;
-
-        line_of_code >> command >> this->_arg1 >> this->_arg2;
+        // extract tokens from stream
+        // store tokens in _command, _arg1 and _arg2
+        line_of_code >> this->_command >> this->_arg1 >> this->_arg2;
 
         // Debug:
         // std::cout << command << this->_arg1 << this->_arg2 << "\n";
 
         // determine the type of command
-        commandType type;
-
-        // C_ARITHMETIC,
-        // C_PUSH,
-        // C_POP,
-        // C_LABEL,
-        // C_GOTO,
-        // C_IF,
-        // C_FUNCTION,
-        // C_RETURN,
-        // C_CALL
+        COMMAND_TYPE type;
 
         // TODO: [Week 2] Implement recognition for other types of commands
 
-        if (command == "push")
+        if (this->_command == "push")
         {
             type = C_PUSH;
         }
-        else if (command == "pop")
+        else if (this->_command == "pop")
         {
             type = C_POP;
         }
@@ -150,9 +154,13 @@ void Parser::advance()
     }
 }
 
-commandType Parser::command_type()
+COMMAND_TYPE Parser::commandType()
 {
     return this->_command_type;
+}
+
+std::string Parser::currentCommand() {
+    return this->_command;
 }
 
 std::string Parser::arg1()
@@ -163,8 +171,8 @@ std::string Parser::arg1()
 std::string Parser::arg2()
 {
     return this->_arg2;
-}
 
+}
 std::string Parser::trimfnc(std::string str)
 {
     const char *typeOfWhitespaces = " \t\n\r\f\v";

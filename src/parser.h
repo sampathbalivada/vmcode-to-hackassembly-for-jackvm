@@ -19,46 +19,81 @@ enum COMMAND_TYPE
 class Parser
 {
 public:
-    // Constructor:
-    // Open the input file and get it ready for parsing
+    /* Constructor */
+
+    /*  
+    *   Parser 
+    *   Opens the input file and get it ready for parsing
+    */
+
     Parser(std::string);
 
-    // Methods:
-    // determines if there the more lines to parse
+    /* Methods */
+
+    /*
+    *   bool hasMoreCommands()
+    *   returns true if there are more lines to be parsed returns false otherwise
+    */
+
     bool hasMoreCommands();
-    // moves the parser to next line if there are more lines
+
+    /*
+    *   void advance()
+    *   moves the parser to next line if there are more lines 
+    */
+
     void advance();
-    // returns the type of command for the current line
+
+    /*
+    *   COMMAND_TYPE commandType()
+    *   returns the type of command for the current line
+    */
+
     COMMAND_TYPE commandType();
-    // returns the command
+
+    /*
+    *   std::string currentCommand()
+    *   returns the command in the current line 
+    */
     std::string currentCommand();
-    // returns the first argument in the command
+
+    /*
+    *   void arg1()
+    *   returns the first argument for the command 
+    */
+
     std::string arg1();
-    // returns the second argument in the command
+
+    /*
+    *   void arg2()
+    *   returns the second argument for the command
+    */
+
     std::string arg2();
 
 private:
-    // Variables
-    // store the file location
     std::string _file_location;
-    // store the file reader
     std::ifstream _file_reader = std::ifstream();
-    // current line number in vm_code being parsed
-    // cannot use size_t as it is an unsigned type
+    
+    /*  
+    *   current line number in vm_code being parsed
+    *   cannot use size_t as it is an unsigned type
+    */
     int current_line = -1;
-    // stores the type of command for the current line
+    
     COMMAND_TYPE _command_type;
-    // stores the current command
-    std::string _command; 
-    // stores the first argument for the command
+    std::string _command;
     std::string _arg1;
-    // stores the second argument for the command
     std::string _arg2;
-    // store the entire file as array of strings
     std::vector<std::string> vm_code;
 
-    // Methods:
-    // Removed whitespaces and speacial characters from the start and end of the string
+    /* Methods */
+
+    /*
+    *   std::string trimfnc()
+    *   returns a string after removing whitespaces and special characters '\t\n\r\f\v' from the start and end of the string
+    */
+    
     std::string trimfnc(std::string);
 };
 
@@ -87,16 +122,17 @@ bool Parser::hasMoreCommands()
     *  cannot comapre size_t and int as size_t is unsigned and int is signed.
     *  typecasted size_t to int
     */
+
     return this->current_line < (int)vm_code.size() - 1;
 }
 
 void Parser::advance()
-{      
+{
     /*
     *  check if the parser has more commands to parse
     *  and move to the next line of command
     */
-    
+
     if (hasMoreCommands())
     {
         do
@@ -115,18 +151,12 @@ void Parser::advance()
 
         } while (this->vm_code[this->current_line] == "");
 
-        // Debug:
-        // std::cout << this->vm_code[this->current_line] << "\n";
-
         // create a string stream to tokenize
         std::istringstream line_of_code(this->vm_code[this->current_line]);
 
         // extract tokens from stream
         // store tokens in _command, _arg1 and _arg2
         line_of_code >> this->_command >> this->_arg1 >> this->_arg2;
-
-        // Debug:
-        // std::cout << command << this->_arg1 << this->_arg2 << "\n";
 
         // determine the type of command
         COMMAND_TYPE type;
@@ -159,7 +189,8 @@ COMMAND_TYPE Parser::commandType()
     return this->_command_type;
 }
 
-std::string Parser::currentCommand() {
+std::string Parser::currentCommand()
+{
     return this->_command;
 }
 
@@ -171,7 +202,6 @@ std::string Parser::arg1()
 std::string Parser::arg2()
 {
     return this->_arg2;
-
 }
 std::string Parser::trimfnc(std::string str)
 {

@@ -5,8 +5,11 @@
 class CodeGenerator
 {
 public:
-    /* 
-    *   Constructor:
+
+    /* Constructor */
+
+    /*  
+    *   CodeGenerator
     *   Verifies if the input file has a .vm extension and throws an error if it doesn't.
     *   Stores the output file name for the output assembly code.
     */
@@ -51,11 +54,25 @@ private:
     void writeLineToOutputFile(std::string);
 
     /*
-    *   void writgetCurrentLineNumbereLineToOutputFile
+    *   void getCurrentLineNumber
     *   returns the current line number of VM code being translated 
     */
 
     std::string getCurrentLineNumber();
+
+    /*
+    *   void writeStoreTopTwoElementsInDandM
+    *   writes the assembly code for storing top 2 elements in the stack in D and M 
+    */
+
+    void writeStoreTopTwoElementsInDandM();
+
+    /*
+    *   void writeDtoTOS
+    *   writes the assembly code for storing value in D to the Top Of Stack  
+    */
+
+    void writeDtoTOS();
 };
 
 CodeGenerator::CodeGenerator(std::string input_file_name)
@@ -109,9 +126,11 @@ void CodeGenerator::generate(COMMAND_TYPE type_of_command, std::string command, 
     case C_POP:
         if (arg1 == "constant")
         {
-        writePushPop(type_of_command, arg1, arg2);
-        } else {
-            writeLineToOutputFile("// ERROR: " + command + " " + arg1 + " " + arg2);
+            writePushPop(type_of_command, arg1, arg2);
+        }
+        else
+        {
+            writeLineToOutputFile("// NOT IMPLEMENTED ERROR: " + command + " " + arg1 + " " + arg2);
         }
         break;
     default:
@@ -130,7 +149,12 @@ void CodeGenerator::writeArithmetic(std::string command)
     {
         std::string operation = (command == "add") ? "+" : "-";
 
-        writeLineToOutputFile("@SP\nA=M-1\nD=M\n@SP\nM=M-1\n@SP\nA=M-1\nD=M" + operation + "D\n@SP\nA=M-1\nM=D");
+        // writeStoreTopTwoElementsInDandM
+        writeStoreTopTwoElementsInDandM();
+
+        writeLineToOutputFile("D=M" + operation + "D");
+
+        writeDtoTOS();
     }
     else if (command == "eq" || command == "lt" || command == "gt")
     {
@@ -149,13 +173,17 @@ void CodeGenerator::writeArithmetic(std::string command)
             jump_command = "JGT";
         }
 
-        writeLineToOutputFile("@SP\nA=M-1\nD=M\n@SP\nM=M-1\n@SP\nA=M-1\nD=M-D\n@" + command + "_TRUE_" + getCurrentLineNumber() + "\nD;" + jump_command + "\n@" + command + "_END_" + getCurrentLineNumber() + "\nD=0;JMP\n(" + command + "_TRUE_" + getCurrentLineNumber() + ")\nD=-1\n(" + command + "_END_" + getCurrentLineNumber() + ")\n@SP\nA=M-1\nM=D");
+        writeStoreTopTwoElementsInDandM();
+        writeLineToOutputFile("D=M-D\n@" + command + "_TRUE_" + getCurrentLineNumber() + "\nD;" + jump_command + "\n@" + command + "_END_" + getCurrentLineNumber() + "\nD=0;JMP\n(" + command + "_TRUE_" + getCurrentLineNumber() + ")\nD=-1\n(" + command + "_END_" + getCurrentLineNumber() + ")");
+        writeDtoTOS();
     }
     else if (command == "and" || command == "or")
     {
         std::string logic_command = (command == "and") ? "&" : "|";
 
-        writeLineToOutputFile("@SP\nA=M-1\nD=M\n@SP\nM=M-1\n@SP\nA=M-1\nD=D" + logic_command + "M\n@SP\nA=M-1\nM=D");
+        writeStoreTopTwoElementsInDandM();
+        writeLineToOutputFile("D=D" + logic_command + "M");
+        writeDtoTOS();
     }
     else if (command == "not" || command == "neg")
     {
@@ -167,6 +195,24 @@ void CodeGenerator::writeArithmetic(std::string command)
     {
         writeLineToOutputFile("// other operation: " + command);
     }
+}
+
+void CodeGenerator::writeStoreTopTwoElementsInDandM()
+{
+    writeLineToOutputFile("@SP");
+    writeLineToOutputFile("A=M-1");
+    writeLineToOutputFile("D=M");
+    writeLineToOutputFile("@SP");
+    writeLineToOutputFile("M=M-1");
+    writeLineToOutputFile("@SP");
+    writeLineToOutputFile("A=M-1");
+}
+
+void CodeGenerator::writeDtoTOS()
+{
+    writeLineToOutputFile("@SP");
+    writeLineToOutputFile("A=M-1");
+    writeLineToOutputFile("M=D");
 }
 
 void CodeGenerator::writePushPop(COMMAND_TYPE type_of_command, std::string memory, std::string value)

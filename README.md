@@ -20,7 +20,7 @@ VMTranslator (Codebase)
     |___ Driver (main)
 ```
 
-### C++ Concepts Covered
+### C++ Features Used
 
 - STL Vector (`vector`)
 - File Handling (`fstream`)

@@ -5,7 +5,6 @@
 class CodeGenerator
 {
 public:
-
     /* Constructor */
 
     /*  
@@ -27,7 +26,9 @@ public:
 private:
     std::string input_file_name;
     std::string output_file_name;
+    std::string file_name_without_path;
     std::ofstream output_file;
+
     int line_number;
 
     /* Methods */
@@ -99,6 +100,8 @@ CodeGenerator::CodeGenerator(std::string input_file_name)
         throw std::invalid_argument("Invalid File Extension: Please ensure the file has a .vm extension");
     }
 
+    this->file_name_without_path = this->output_file_name.substr(this->output_file_name.find_last_of("/\\") + 1);
+
     std::cout << "Code Generator initailized for file: " << this->output_file_name << std::endl;
 }
 
@@ -124,14 +127,7 @@ void CodeGenerator::generate(COMMAND_TYPE type_of_command, std::string command, 
         break;
     case C_PUSH:
     case C_POP:
-        if (arg1 == "constant")
-        {
-            writePushPop(type_of_command, arg1, arg2);
-        }
-        else
-        {
-            writeLineToOutputFile("// NOT IMPLEMENTED ERROR: " + command + " " + arg1 + " " + arg2);
-        }
+        writePushPop(type_of_command, arg1, arg2);
         break;
     default:
         break;
@@ -217,6 +213,30 @@ void CodeGenerator::writeDtoTOS()
 
 void CodeGenerator::writePushPop(COMMAND_TYPE type_of_command, std::string memory, std::string value)
 {
+
+    std::string memory_id = "";
+
+    if (memory == "local")
+    {
+        memory_id = "LCL";
+    }
+    else if (memory == "argument")
+    {
+        memory_id = "ARG";
+    }
+    else if (memory == "this")
+    {
+        memory_id = "THIS";
+    }
+    else if (memory == "that")
+    {
+        memory_id = "THAT";
+    }
+    else if (memory == "temp")
+    {
+        memory_id = "5";
+    }
+
     switch (type_of_command)
     {
     case (C_PUSH):
@@ -225,6 +245,47 @@ void CodeGenerator::writePushPop(COMMAND_TYPE type_of_command, std::string memor
         {
             writeLineToOutputFile("@" + value + "\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1");
         }
+        else if (memory == "local" || memory == "argument" || memory == "this" || memory == "that" || memory == "temp")
+        {
+            writeLineToOutputFile("@" + memory_id);
+            writeLineToOutputFile("D=M");
+            writeLineToOutputFile("@" + value);
+            writeLineToOutputFile("D=D+A");
+            writeLineToOutputFile("A=D");
+            writeLineToOutputFile("D=M");
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("A=M");
+            writeLineToOutputFile("M=D");
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("M=M+1");
+        }
+        else if (memory == "static")
+        {
+            writeLineToOutputFile("@" + file_name_without_path + "." + value);
+            writeLineToOutputFile("D=M");
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("A=M");
+            writeLineToOutputFile("M=D");
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("M=M+1");
+        }
+        else if (memory == "pointer")
+        {
+            if (value == "0")
+            {
+                writeLineToOutputFile("@THIS");
+            }
+            else
+            {
+                writeLineToOutputFile("@THAT");
+            }
+            writeLineToOutputFile("D=M");
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("A=M");
+            writeLineToOutputFile("M=D");
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("M=M+1");
+        }
         else
         {
             writeLineToOutputFile("// other memory location");
@@ -232,6 +293,58 @@ void CodeGenerator::writePushPop(COMMAND_TYPE type_of_command, std::string memor
         break;
     case (C_POP):
         writeLineToOutputFile("// pop " + memory + " " + value);
+        if (memory == "local" || memory == "argument" || memory == "this" || memory == "that" || memory == "temp")
+        {
+            writeLineToOutputFile("@" + memory_id + " // get " + memory + " base address");
+            if (memory == "temp")
+            {
+                writeLineToOutputFile("D=A");
+            }
+            else
+            {
+                writeLineToOutputFile("D=M // store it in D");
+            }
+            writeLineToOutputFile("@" + value);
+            writeLineToOutputFile("D=D+A // add 0 to " + memory_id);
+            writeLineToOutputFile("@R13");
+            writeLineToOutputFile("M=D // store " + memory_id + "+0 address in R13");
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("M=M-1");
+            writeLineToOutputFile("A=M //*SP");
+            writeLineToOutputFile("D=M // D = *SP");
+            writeLineToOutputFile("@R13");
+            writeLineToOutputFile("A=M");
+            writeLineToOutputFile("M=D");
+        }
+        else if (memory == "static")
+        {
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("M=M-1");
+            writeLineToOutputFile("A=M //*SP");
+            writeLineToOutputFile("D=M // D = *SP");
+            writeLineToOutputFile("@" + file_name_without_path + "." + value);
+            writeLineToOutputFile("M=D");
+        }
+        else if (memory == "pointer")
+        {
+            writeLineToOutputFile("@SP");
+            writeLineToOutputFile("M=M-1");
+            writeLineToOutputFile("A=M //*SP");
+            writeLineToOutputFile("D=M // D = *SP");
+            if (value == "0")
+            {
+                writeLineToOutputFile("@THIS");
+            }
+            else
+            {
+                writeLineToOutputFile("@THAT");
+            }
+            writeLineToOutputFile("M=D");
+        }
+        else
+        {
+            writeLineToOutputFile("// other memory location");
+        }
     default:
         break;
     }
